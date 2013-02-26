@@ -1,0 +1,33 @@
+﻿@inherits ViewPage<ServiceStack.Tuto.WebHost.Services.QuotesResponse>
+
+@{
+    ViewBag.Title = "All Quotes";
+    Layout = "HtmlReport";
+}
+
+<table class="table">
+    <thead> 
+        <tr>
+            <th>Symbol</th>
+            <th>Value</th>
+            <th></th> 
+        </tr>
+    </thead> 
+    <tfoot>
+        <tr>
+            <td colspan="3">
+                <p><a href="/quotes">Show all @Model.Total Quotes</a></p>
+            </td>
+        </tr>
+    </tfoot>
+    <tbody>
+        @foreach (var quotes in Model.Results)
+        {
+            <tr>
+                <td><a href="/quotedetails?Symbol=@quotes.Symbol">@quotes.Symbol</a></td>
+                <td>@quotes.Value</td>     
+                <td><a href="/quotes/delete/@quotes.Symbol">delete</a></td>       
+            </tr>
+        }
+    </tbody>
+</table>

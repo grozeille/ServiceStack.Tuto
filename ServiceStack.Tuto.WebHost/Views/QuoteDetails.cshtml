@@ -1,0 +1,129 @@
+﻿@inherits ViewPage<ServiceStack.Tuto.WebHost.Services.QuoteDetailsResponse>
+
+@{
+    ViewBag.Title = "Quotes Details";
+    Layout = "HtmlReport";
+}
+
+@if (Model.ShowMessage)
+{ 
+    if (Model.IsMessageError)
+    {
+        <div class="alert alert-error">
+            <h4>Error:</h4> @Model.Message
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success">
+            <h4>OK:</h4> @Model.Message
+        </div>
+    }
+}
+<fieldset>
+    <legend>Quote #@Model.Result.Symbol</legend>
+    <p>
+    <div>Quote: @Model.Result.Value</div>
+    <div>LastUpdate: @Model.Result.LastUpdate.ToString()</div>
+    </p>
+    <p>
+    <form id="refreshquote" method="post" action="/quotedetails?Symbol=@Model.Result.Symbol">
+        <input type="submit" class="btn btn-primary" value="Refresh" />
+    </form>
+    <form id="price" method="get" action="/price">
+        <input type="hidden" name="Symbol" value="@Model.Result.Symbol" />
+        <input type="submit" class="btn btn-primary" value="Price" />
+    </form>
+    </p>
+</fieldset>
+
+<div id="spot-history"></div>
+
+<div id="vol-history"></div>
+
+@section javascript
+{
+
+<script src="@Url.Content("~/highcharts/highcharts.js")"></script>
+<script src="@Url.Content("~/highcharts/highcharts-more.js")"></script>
+<script src="@Url.Content("~/highcharts/highstock.js")"></script>
+<script src="@Url.Content("~/highcharts/modules/data.js")"></script>
+<script src="@Url.Content("~/highcharts/modules/exporting.js")"></script>
+<script type="text/javascript">
+
+    $(function () {
+
+        // display the quote history
+        $.getJSON("/spothistory/@Model.Result.Symbol", function (data) {
+            
+            window.spothistory = new Highcharts.StockChart({
+                chart: {
+                    renderTo: 'spot-history'
+                },
+
+                rangeSelector: {
+                    selected: 1
+                },
+
+                title: {
+                    text: 'History'
+                },
+                
+                series: [{
+                    name: '@Model.Result.Symbol',
+                    data: data,
+                    tooltip: {
+                        valueDecimals: 2
+                    }
+                }]
+            });
+        });
+
+        // display the vol history
+        $.getJSON("/volhistory/@Model.Result.Symbol", function (data) {
+            
+            window.volhistory = new Highcharts.Chart({
+                chart: {
+                    renderTo: 'vol-history',
+                    type: 'line',
+                    //marginRight: 130,
+                    //marginBottom: 25
+                },
+                title: {
+                    text: 'Volatility'
+                    //x: -20 //center
+                },
+                xAxis: {
+                    type: 'datetime',
+                    dateTimeLabelFormats: { // don't display the dummy year
+                        month: '%e. %b',
+                        year: '%b'
+                    }
+                },
+                //subtitle: {
+                //    text: 'Source: WorldClimate.com',
+                //    x: -20
+                //},
+                tooltip: {
+                    formatter: function () {
+                        return Highcharts.dateFormat('%e. %b', this.x) +': '+ this.y;
+                    }
+                },
+                //legend: {
+                //    layout: 'vertical',
+                //    align: 'right',
+                //    verticalAlign: 'top',
+                //    x: -10,
+                //    y: 100,
+                //    borderWidth: 0
+                //},
+                series: [{
+                    name: '@Model.Result.Symbol',
+                    data: data
+                }]
+            });
+        });
+    });
+	
+</script>
+}

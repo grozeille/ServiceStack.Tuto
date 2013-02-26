@@ -1,0 +1,181 @@
+﻿@inherits ViewPage<ServiceStack.Tuto.WebHost.Services.PricerResponse>
+@{
+    ViewBag.Title = "Pricer";
+    Layout = "HtmlReport";
+}
+<fieldset>
+    <legend>Quote #@Model.Symbol</legend>
+    <form class="form-horizontal" action="/price", method="post">
+        <div class="control-group">
+            <label class="control-label" for="Symbol">Symbol</label>
+            <div class="controls">
+                <input type="text" name="Symbol" id="Symbol" placeholder="Symbol" value="@Model.Symbol" readonly="readonly">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="Spot">Spot</label>
+            <div class="controls">
+                <input type="text" name="Spot" id="Spot" placeholder="0.0" value="@Model.Spot" readonly="readonly">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="Strike">Strike</label>
+            <div class="controls">
+                <input type="text" name="Strike" id="Strike" placeholder="0.0" value="@Model.Strike">
+            </div>
+        </div>
+       <div class="control-group">
+            <label class="control-label" for="Volatility">Volatility</label>
+            <div class="controls">
+                <input type="text" name="Volatility" id="Volatility" placeholder="0.0" value="@Model.Volatility">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="Rate">Rate</label>
+            <div class="controls">
+                <input type="text" name="Rate" id="Rate" placeholder="0.0" value="@Model.Rate">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="SelectedMaturity">SelectedMaturity</label>
+            <div class="controls">
+                <select name="SelectedMaturity" id="SelectedMaturity">
+                    @foreach (var item in Model.Maturities)
+                    {
+                        if (item.Equals(Model.SelectedMaturity))
+                        {
+                            <option value="@item.ToString()" selected="selected">@item.ToShortDateString()</option>
+                        }
+                        else
+                        {
+                            <option value="@item.ToString()">@item.ToShortDateString()</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="OptionType">OptionType</label>
+            <div class="controls">
+                <select name="OptionType" id="OptionType">
+                   @if (Model.OptionType.Equals(PricerTuto.OptionType.Call))
+                    {
+                        <option value="Call" selected="selected">Call</option>
+                        <option value="Put">Put</option>
+                    }
+                   else
+                   {
+                        <option value="Call">Call</option>
+                        <option value="Put" selected="selected">Put</option>
+                   }
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <input type="submit" value="Price" class="btn btn-primary" />
+        </div>
+    </form>
+</fieldset>
+<fieldset>
+    <legend>Price result</legend>
+    <p>
+    <div>Price: <b>@Model.Price</b></div>
+    <div>Delta: <b>@Model.Delta</b></div>
+    <div>Gamma: <b>@Model.Gamma</b></div>
+    </p>
+</fieldset>
+<fieldset>
+    <legend>Payoff</legend>
+    <div id="payoff">
+    </div>
+</fieldset>
+<fieldset>
+    <legend>Delta</legend>
+    <div id="delta">
+    </div>
+</fieldset>
+<fieldset>
+    <legend>Gamma</legend>
+    <div id="gamma">
+    </div>
+</fieldset>
+@section javascript
+{
+    <script src="@Url.Content("~/highcharts/highcharts.js")"></script>
+    <script src="@Url.Content("~/highcharts/highcharts-more.js")"></script>
+    <script src="@Url.Content("~/highcharts/highstock.js")"></script>
+    <script src="@Url.Content("~/highcharts/modules/data.js")"></script>
+    <script src="@Url.Content("~/highcharts/modules/exporting.js")"></script>
+    <script type="text/javascript">
+
+    $(function () {
+        $.ajax({
+            url: "/delta",
+            type: "POST",
+            data: {
+                Symbol: $("#Symbol").val(),
+                Spot: $("#Spot").val(),
+                Volatility: $("#Volatility").val(),
+                Rate: $("#Rate").val(),
+                Strike: $("#Strike").val(),
+                SelectedMaturity: $("#SelectedMaturity").val(),
+                OptionType: $("#OptionType").val()
+            },
+            dataType: 'json',
+            success: function(json) {
+            
+                window.payoff = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'payoff',
+                        type: 'spline'
+                    },
+                    title: {
+                        text: 'PayOff'
+                    },
+                    series: [{
+                        name: "payoff",
+                        data: json.Payoff,
+                        color: "#fcb441",
+                        type: "line"
+                    },{
+                        name: "price",
+                        data: json.Price,
+                        color: "#418cf0"
+                    }]
+                });
+
+                window.delta = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'delta',
+                        type: 'spline'
+                    },
+                    title: {
+                        text: 'Delta'
+                    },
+                    series: [{
+                        name: "delta",
+                        data: json.Delta,
+                        color: "#ff0000"
+                    }]
+                });
+
+                window.delta = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'gamma',
+                        type: 'spline'
+                    },
+                    title: {
+                        text: 'Gammma'
+                    },
+                    series: [{
+                        name: "gamma",
+                        data: json.Gamma,
+                        color: "#00c000"
+                    }]
+                });
+            }
+        });        
+    });
+	
+    </script>
+}
